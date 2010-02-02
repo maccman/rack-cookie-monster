@@ -40,7 +40,7 @@ module Rack
   
     def call(env)
       p env
-      shares_with(env["HTTP_PATH"]) do
+      shares_with(env["REQUEST_URI"]) do
         request = ::Rack::Request.new(env)
         eat_cookies!(env, request)
       end
