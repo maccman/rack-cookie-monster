@@ -39,7 +39,6 @@ module Rack
     end
   
     def call(env)
-      p env
       shares_with(env["REQUEST_URI"]) do
         request = ::Rack::Request.new(env)
         eat_cookies!(env, request)
@@ -47,49 +46,47 @@ module Rack
       @app.call(env)
     end
 
-    private
-  
-    def shares_with(agent)
-      yield if @config.paths.empty?
+    private  
+      def shares_with(path)
+        yield if @config.paths.empty?
     
-      any_matches = @config.paths.any? do |snacker|
-        case snacker
-        when String
-          snacker == agent
-        when Regexp
-          snacker.match(agent) != nil
+        any_matches = @config.paths.any? do |snacker|
+          case snacker
+          when String
+            snacker == path
+          when Regexp
+            snacker.match(path) != nil
+          end
         end
-      end
     
-      yield if any_matches
-    end
-  
-    def eat_cookies!(env, request)
-      cookies = request.cookies
-      new_cookies = {}
-      
-      @config.cookies.each do |cookie_name| 
-        value = request.params[cookie_name.to_s]
-        if value
-          cookies.delete(cookie_name.to_s)
-          new_cookies[cookie_name.to_s] = value
-        end
+        yield if any_matches
       end
-      
-      new_cookies.merge!(cookies)    
-      env["HTTP_COOKIE"] = new_cookies.map do |k,v|
-        "#{k}=#{v}"
-      end.compact.join("; ").freeze
-    end
   
+      def eat_cookies!(env, request)
+        cookies = request.cookies
+        new_cookies = {}
+      
+        @config.cookies.each do |cookie_name| 
+          value = request.params[cookie_name.to_s]
+          if value
+            cookies.delete(cookie_name.to_s)
+            new_cookies[cookie_name.to_s] = value
+          end
+        end
+      
+        new_cookies.merge!(cookies)    
+        env["HTTP_COOKIE"] = new_cookies.map do |k,v|
+          "#{k}=#{v}"
+        end.compact.join("; ").freeze
+      end
   end
   
   class CookieMonsterConfig
     attr_reader :cookies, :paths
 
-    def initialize(opts={})
-      @cookies = [opts[:cookies]].compact.flatten.map { |x| x.to_sym }
-      @paths   = [opts[:paths]].compact.flatten
+    def initialize
+      @cookies = []
+      @paths   = []
     end
 
     def share(cookie)
@@ -97,7 +94,7 @@ module Rack
     end
 
     def for_path(path)
-      @paths << paths
+      @paths << path
     end
   end
 end
