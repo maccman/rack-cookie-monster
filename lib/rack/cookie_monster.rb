@@ -1,6 +1,5 @@
 module Rack
   class CookieMonster
-    
     class Hungry < StandardError; end    
     
     class<<self      
@@ -10,9 +9,9 @@ module Rack
         @configured = true
       end
     
-      def snackers
+      def paths
         ensure_monster_configured!
-        @config.snackers
+        @config.paths
       end
     
       def cookies
@@ -28,21 +27,19 @@ module Rack
         )
       end
       
-      private
-      
-      def ensure_monster_configured!
-        raise Hungry.new("Cookie Monster has not been configured") unless @configured
-      end
-      
+      private      
+        def ensure_monster_configured!
+          raise Hungry.new("Cookie Monster has not been configured") unless @configured
+        end
     end
     
     def initialize(app, opts=nil)
-      @app = app
+      @app    = app
       @config = opts.nil? ? self.class : CookieMonsterConfig.new(opts)
     end
   
     def call(env)
-      shares_with(env["HTTP_USER_AGENT"]) do
+      shares_with(env["HTTP_PATH"]) do
         request = ::Rack::Request.new(env)
         eat_cookies!(env, request)
       end
@@ -52,9 +49,9 @@ module Rack
     private
   
     def shares_with(agent)
-      yield if @config.snackers.empty?
+      yield if @config.paths.empty?
     
-      any_matches = @config.snackers.any? do |snacker|
+      any_matches = @config.paths.any? do |snacker|
         case snacker
         when String
           snacker == agent
@@ -87,18 +84,18 @@ module Rack
   end
   
   class CookieMonsterConfig
-    attr_reader :cookies, :snackers
+    attr_reader :cookies, :paths
 
     def initialize(opts={})
       @cookies = [opts[:cookies]].compact.flatten.map { |x| x.to_sym }
-      @snackers = [opts[:share_with]].compact.flatten
+      @paths   = [opts[:paths]].compact.flatten
     end
 
-    def eat(cookie)
+    def share(cookie)
       @cookies << cookie.to_sym
     end
 
-    def share_with(snacker)
+    def for_path(path)
       @snackers << snacker
     end
   end
