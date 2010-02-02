@@ -97,7 +97,7 @@ module Rack
     end
 
     def for_path(path)
-      @snackers << snacker
+      @paths << paths
     end
   end
 end
