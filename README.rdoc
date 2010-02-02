@@ -15,44 +15,7 @@ The environment can be configured by using bundler.
   Rack::CookieMonster.configure do |c|
     c.eat :_session_id
     c.eat :user_credentials
-    c.share_with /^(Adobe|Shockwave) Flash/
-    c.share_with "Burt"
+    c.for_path /^\/user_sessions/
   end
 
   Rack::CookieMonster.configure_for_rails
-
-<b>Rack Example:</b>
-
-  class CookieMonsterApplication
-    def call(env)
-      cookies = ::Rack::Request.new(env).cookies
-      res = ::Rack::Response.new
-      res.write %{
-        <html>
-          <head>
-            <title>Form</title>
-          </head>
-          <body>
-            <form action="/" method="post">
-              Cookie 1: <input type="text" name="cookie_1" />
-              Cookie 2: <input type="text" name="cookie_2" />
-              Non Cookie: <input type="text" name="non_cookie" />
-              <input type="submit" />
-            </form>
-          </body>
-          #{
-            cookies.map do |k,v|
-              "<p>#{k} - #{v}</p>"
-            end.join("\n")
-          }
-        </html>
-      }
-      res.finish
-    end
-  end
-
-  use Rack::CookieMonster, {
-    :cookies => [:cookie_1, :cookie_2],
-    :share_with => /firefox/i
-  }
-  run CookieMonsterApplication.new
